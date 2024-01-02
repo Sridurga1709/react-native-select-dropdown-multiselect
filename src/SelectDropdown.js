@@ -1,16 +1,16 @@
-import React, {forwardRef, useImperativeHandle} from 'react';
-import {View, Text, TouchableOpacity, FlatList} from 'react-native';
+import React, { forwardRef, useImperativeHandle, useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, FlatList } from 'react-native';
 import styles from './styles';
-import {isExist} from './helpers/isExist';
-import {mergeStyles} from './helpers/mergeStyles';
+import { isExist } from './helpers/isExist';
+import { mergeStyles } from './helpers/mergeStyles';
 import Input from './components/Input';
 import DropdownOverlay from './components/DropdownOverlay';
 import DropdownModal from './components/DropdownModal';
 import DropdownWindow from './components/DropdownWindow';
-import {useSelectDropdown} from './hooks/useSelectDropdown';
-import {useLayoutDropdown} from './hooks/useLayoutDropdown';
-import {useRefs} from './hooks/useRefs';
-import {findIndexInArr} from './helpers/findIndexInArr';
+import { useSelectDropdown } from './hooks/useSelectDropdown';
+import { useLayoutDropdown } from './hooks/useLayoutDropdown';
+import { useRefs } from './hooks/useRefs';
+import { findIndexInArr } from './helpers/findIndexInArr';
 
 const SelectDropdown = (
   {
@@ -59,7 +59,7 @@ const SelectDropdown = (
 ) => {
   const disabledInternalSearch = !!onChangeSearchInputText;
   /* ******************* hooks ******************* */
-  const {dropdownButtonRef, dropDownFlatlistRef} = useRefs();
+  const { dropdownButtonRef, dropDownFlatlistRef } = useRefs();
   const {
     dataArr, //
     selectedItem,
@@ -69,6 +69,7 @@ const SelectDropdown = (
     searchTxt,
     setSearchTxt,
   } = useSelectDropdown(data, defaultValueByIndex, defaultValue, disabledInternalSearch);
+  const [list, setList] = useState(dataArr);
   const {
     isVisible, //
     setIsVisible,
@@ -118,10 +119,34 @@ const SelectDropdown = (
   };
   const onSelectItem = (item, index) => {
     const indexInOriginalArr = findIndexInArr(item, data);
-    closeDropdown();
-    onSelect && onSelect(item, indexInOriginalArr);
+    // closeDropdown();
+    // onSelect && onSelect(item, indexInOriginalArr);
+    setList((prevData) => {
+      return prevData.map((item, ind) => {
+        let state =
+          ind === index
+            ? item.state === "checked"
+              ? "unchecked"
+              : "checked"
+            : item.state;
+        return {
+          ...item,
+          state: state,
+        };
+      });
+    });
     selectItem(indexInOriginalArr);
   };
+
+  useEffect(() => {
+    let selected = list.filter((item) => item.state === "checked");
+    onSelect && onSelect(selected);
+  }, [list]);
+
+
+  useEffect(() => {
+    setList(dataArr);
+  }, [dataArr]);
   /* ******************** Render Methods ******************** */
   const renderSearchView = () => {
     return (
@@ -144,7 +169,7 @@ const SelectDropdown = (
       )
     );
   };
-  const renderFlatlistItem = ({item, index}) => {
+  const renderFlatlistItem = ({ item, index }) => {
     const selectedItemIndex = findIndexInArr(selectedItem, dataArr);
     const isSelected = index == selectedItemIndex;
     return (
